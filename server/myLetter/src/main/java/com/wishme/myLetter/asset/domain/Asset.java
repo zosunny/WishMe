@@ -1,7 +1,7 @@
 package com.wishme.myLetter.asset.domain;
 
 import com.wishme.myLetter.myLetter.domain.MyLetter;
-import com.wishme.myLetter.school.domain.SchoolLetter;
+import com.wishme.myLetter.domain.SchoolLetter;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,4 +29,7 @@ public class Asset {
 
     @OneToMany(mappedBy = "asset", cascade = CascadeType.ALL)
     private List<SchoolLetter> schoolLetters = new ArrayList<>();
+
+    @Column(name = "type", nullable = false)
+    private char type;
 }
