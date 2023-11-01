@@ -81,6 +81,11 @@ public class DeveloperService {
     // 개발자 편지 상세 조회
     public OneDeveloperLetterResponseDto oneDeveloperLetter(Authentication authentication, Long myLetterId){
         MyLetter myLetter = developerRepository.findById(myLetterId).orElse(null);
+
+        if(myLetter.getToUser().getUserSeq() != 1) {
+            throw new IllegalArgumentException("개발자 편지가 아닙니다.");
+        }
+
         if(myLetter != null && myLetter.getIsPublic()){
             return OneDeveloperLetterResponseDto.builder()
                     .assetSeq(myLetter.getAsset().getAssetSeq())
