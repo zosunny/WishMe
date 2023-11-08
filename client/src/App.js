@@ -32,7 +32,7 @@ function App() {
         <Route path="/searchSchool" element={<SearchSchoolPage />}></Route>
         <Route path="/mypage" element={<MyPage />}></Route>
         <Route path="/kakao/callback" element={<KakaoRedirectPage />}></Route>
-        <Route path="/desk/:deskUuid" element={<DeskPage />}></Route>
+        <Route path="/desk/:deskUuid/:letterPage?" element={<DeskPage />}></Route>
         <Route path="/desk/:deskUuid/checkLogin" element={<CheckDeskLogin />} />
         <Route
           path="/desk/:deskUuid/selectAsset"
@@ -41,6 +41,10 @@ function App() {
         <Route
           path="/desk/:deskUuid/writeLetter/:assetSeq"
           element={<WriteDeskLetter />}
+        />
+        <Route
+          path="/deskLetterDetail/:deskUuid/:letterId/:page"
+          element={<DeskLetterDetail />}
         />
         {/* 학교 */}
         <Route
