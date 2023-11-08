@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";  // useNavigate import 추
 import style from "./selectDeveloperAsset.module.css";
 import axios from 'axios';  // axios import
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io'
+import tokenHttp from "../../apis/tokenHttp";
 
 const SelectDeveloperAsset = () => {
     const [selected, setSelected] = useState(null);
@@ -23,12 +24,14 @@ const SelectDeveloperAsset = () => {
     useEffect(() => {
         // 백엔드 API 호출하여 이미지 URL 가져오기
         const AccessToken = localStorage.getItem("AccessToken");
+        const RefreshToken = localStorage.getItem("RefreshToken");
         const headers = {};
 
         if (AccessToken) {
             headers.Authorization = `Bearer ${AccessToken}`;
+            headers.RefreshToken = `${RefreshToken}`;
         }
-        axios({
+        tokenHttp({
             method: "get",
             url: `${SERVER_URL}/api/my/letter/assets`,
             headers

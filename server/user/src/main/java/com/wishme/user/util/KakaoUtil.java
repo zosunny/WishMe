@@ -19,8 +19,9 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class KakaoUtil {
 
+    @Value("${kakao.redirect.url}")
+    private String REDIRECT_URI;
     private static final String GRANT_TYPE = "authorization_code";
-    private static final String REDIRECT_URI = "https://wishme.co.kr/kakao/callback";
     private static final String TOKEN_URI = "https://kauth.kakao.com/oauth/token";
     private static final String USER_INFO_URI = "https://kapi.kakao.com/v2/user/me";
 
@@ -43,6 +44,8 @@ public class KakaoUtil {
         body.add("client_id", CLIENT_ID);
         body.add("client_secret", CLIENT_SECRET);
         body.add("redirect_uri", REDIRECT_URI);
+        System.out.println(REDIRECT_URI);
+        System.out.println("========여기===========");
         body.add("code", code);
 
         // HTTP 요청 보내기

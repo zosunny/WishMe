@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import style from './Header.module.css';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from "axios";
+import tokenHttp from '../apis/tokenHttp';
 
 const Header = () => {
     const navigate = useNavigate();
@@ -19,12 +20,15 @@ const Header = () => {
 
     useEffect(() => {
         const AccessToken = localStorage.getItem("AccessToken");
+        const RefreshToken = localStorage.getItem("RefreshToken");
+
         if (AccessToken != null) {
             const headers = {
-                Authorization: `Bearer ${AccessToken}`
+                Authorization: `Bearer ${AccessToken}`,
+                RefreshToken: `${RefreshToken}`,
             };
 
-            axios({
+            tokenHttp({
                 method: "get",
                 url: `${SERVER_URL}/api/users`,
                 headers,
@@ -54,6 +58,7 @@ const Header = () => {
 
     const handleLogout = (path) => {
         localStorage.removeItem("AccessToken"); // AccessToken 삭제
+        localStorage.removeItem("RefreshToken"); // RefreshToken 삭제
         setUserName(undefined); // userName 상태를 undefined로 설정
         setIsLoggedIn(false);
         navigate(path); // 로그아웃 후 이동할 페이지 경로
@@ -86,6 +91,18 @@ const Header = () => {
                             마이페이지
                         </div>
                         <div
+                            onClick={() => handleLinkClick('/replyList')}
+                            style={{
+                                cursor: 'pointer',
+                                padding: '12px',
+                                borderBottom: '1px solid #ccc',
+                                fontFamily: 'omyu_pretty',
+                                fontSize: '20px'
+                            }}
+                        >
+                            답장함 가기
+                        </div>
+                        <div
                             onClick={() => handleLinkClick('/searchSchool')}
                             style={{
                                 cursor: 'pointer',
@@ -96,7 +113,7 @@ const Header = () => {
                             }}
                         >학교 칠판 구경하기</div>
                         <div
-                            onClick={() => handleLinkClick('/developer')}
+                            onClick={() => handleLinkClick('/developer/1')}
                             style={{
                                 cursor: 'pointer',
                                 padding: '12px',
@@ -119,7 +136,7 @@ const Header = () => {
                 ) : (
                     <>
                         <div
-                            onClick={() => handleLinkClick('/developer')}
+                            onClick={() => handleLinkClick('/developer/1')}
                             style={{
                                 cursor: 'pointer',
                                 padding: '12px',
@@ -153,10 +170,10 @@ const Header = () => {
                     </>
                 )}
 
-                <div className={style.copyRight} style={{ position: 'fixed', bottom: '0',   fontFamily: 'omyu_pretty' }}>
-                    <div style={{width : "100%"}}>copyright(c) 빛나리</div>
-                    <div>instagram <a href="https://www.instagram.com/wish_me_1116/" target="_blank" rel="noopener noreferrer" style={{color:'black', textDecoration:'none'}}>@wish_me_1116</a></div>
-                    <div  className={style.copyRight} style={{ fontSize: '12px', color: '#ccc' ,   fontFamily: 'omyu_pretty'}} >designed by manshagraphics<br></br>from Flaticon </div>
+                <div className={style.copyRight} style={{ position: 'fixed', bottom: '0', fontFamily: 'omyu_pretty' }}>
+                    <div style={{ width: "100%" }}>copyright(c) 빛나리</div>
+                    <div>instagram <a href="https://www.instagram.com/wish_me_1116/" target="_blank" rel="noopener noreferrer" style={{ color: 'black', textDecoration: 'none' }}>@wish_me_1116</a></div>
+                    <div className={style.copyRight} style={{ fontSize: '12px', color: '#ccc', fontFamily: 'omyu_pretty' }} >designed by manshagraphics<br></br>from Flaticon </div>
                 </div>
 
 

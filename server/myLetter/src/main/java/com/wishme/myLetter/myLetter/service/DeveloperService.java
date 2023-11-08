@@ -2,12 +2,15 @@ package com.wishme.myLetter.myLetter.service;
 
 import com.wishme.myLetter.asset.domain.Asset;
 import com.wishme.myLetter.asset.repository.AssetRepository;
+import com.wishme.myLetter.myLetter.domain.Reply;
 import com.wishme.myLetter.myLetter.dto.request.WriteDeveloperLetterRequestDto;
 import com.wishme.myLetter.myLetter.dto.response.AllDeveloperLetterListResponseDto;
 import com.wishme.myLetter.myLetter.dto.response.AllDeveloperLetterResponseDto;
 import com.wishme.myLetter.myLetter.dto.response.OneDeveloperLetterResponseDto;
 import com.wishme.myLetter.myLetter.domain.MyLetter;
 import com.wishme.myLetter.myLetter.repository.DeveloperRepository;
+import com.wishme.myLetter.myLetter.repository.MyLetterRepository;
+import com.wishme.myLetter.myLetter.repository.ReplyRepository;
 import com.wishme.myLetter.user.domain.User;
 import com.wishme.myLetter.user.repository.UserRepository;
 import com.wishme.myLetter.util.AES256;
@@ -17,6 +20,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +45,8 @@ public class DeveloperService {
     private final DeveloperRepository developerRepository;
     private final UserRepository userRepository;
     private final AssetRepository assetRepository;
+    private final MyLetterRepository myLetterRepository;
+    private final ReplyRepository replyRepository;
 
     // 개발자 편지 작성
     public void writeDeveloperLetter(Authentication authentication, WriteDeveloperLetterRequestDto writeDeveloperLetterRequestDto) throws Exception {
@@ -69,7 +75,7 @@ public class DeveloperService {
                     .content(cipherContent)
                     .fromUserNickname(writeDeveloperLetterRequestDto.getNickname())
                     .fromUser(fromUserLong)
-                    .isPublic(writeDeveloperLetterRequestDto.isPublic())
+                    .isPublic(writeDeveloperLetterRequestDto.getIsPublic())
                     .build();
             developerRepository.save(myLetter);
         }else{
@@ -78,14 +84,29 @@ public class DeveloperService {
     }
 
     // 개발자 책상 확인
-    public AllDeveloperLetterListResponseDto allDeveloperLetter(Pageable pageable, int page){
+    public AllDeveloperLetterListResponseDto allDeveloperLetter(Authentication authentication, int page){
         User admin = userRepository.findById(1L).orElse(null);
 
         // 페이지 번호 사용해 Pageable 수정
-        pageable = PageRequest.of(page-1, pageable.getPageSize(), pageable.getSort());
+        Sort sort = Sort.by(Sort.Order.desc("createAt"));
+        Pageable pageable = PageRequest.of(page - 1, 9, sort);
 
-        Page<MyLetter> myLetters = developerRepository.findAllDeveloperLetter(pageable, admin);
+        List<MyLetter> myLetters = myLetterRepository.findAllByToUser(admin, pageable);
         Integer totalCnt = developerRepository.findTotalCnt(admin);
+
+        // totalCnt가 null이 아닐 때만 연산을 수행합니다.
+        int totalPage = 0;
+        if (totalCnt != null) {
+            totalPage = Math.round(totalCnt / 9.0f);
+        }
+
+        // 로그인한 유저가 개발자면 무조건 열람 가능
+        boolean isDeveloper = false;
+        if(authentication != null){
+            if(Long.parseLong(authentication.getName()) == 1){
+                isDeveloper = true;
+            }
+        }
 
         if(admin != null){
             // 9개씩 담기
@@ -96,6 +117,7 @@ public class DeveloperService {
                         .assetSeq(myLetter.getAsset().getAssetSeq())
                         .fromUserNickname(myLetter.getFromUserNickname())
                         .isPublic(myLetter.getIsPublic())
+                        .developer(isDeveloper)
                         .assetImg(myLetter.getAsset().getAssetImg())
                         .build();
                 developerLetterResponseDtos.add(result);
@@ -103,7 +125,7 @@ public class DeveloperService {
             // 총 편지 수, 총 페이지 수, 페이지 당 편지
             return AllDeveloperLetterListResponseDto.builder()
                     .totalLetters(totalCnt)
-                    .totalPages(myLetters.getTotalPages())
+                    .totalPages(totalPage)
                     .lettersPerPage(developerLetterResponseDtos)
                     .build();
         }else{
@@ -130,6 +152,19 @@ public class DeveloperService {
             throw new RuntimeException("비공개 편지입니다.");
         }
 
+        // 현재 로그인한 유저가 개발자이고, fromUser가 있는 경우
+        boolean isMine = false;
+
+        // 답장 한 적 없는 지 확인
+        Reply reply = replyRepository.findByLetterSeq(myLetterId).orElse(null);
+
+        if(authentication != null){
+            if(Long.parseLong(authentication.getName()) == 1 && myLetter.getFromUser() != null && reply == null){
+                isMine = true;
+            }
+        }
+
+
 //        if(!myLetter.getIsPublic()) {
 //            throw new IllegalArgumentException("해당 편지는 비공개 편지 입니다.");
 //        }
@@ -140,6 +175,8 @@ public class DeveloperService {
 //        PrivateKey privateKey = RSAUtil.getPrivateKeyFromBase64String(privateKeyBase);
 //        String decryptContent = RSAUtil.decryptRSA(myLetter.getContent(), privateKey);
 
+
+
         if(myLetter != null){
             return OneDeveloperLetterResponseDto.builder()
                     .assetSeq(myLetter.getAsset().getAssetSeq())
@@ -148,6 +185,7 @@ public class DeveloperService {
                     .fromUser(myLetter.getFromUser())
                     .createAt(myLetter.getCreateAt())
                     .assetImg(myLetter.getAsset().getAssetImg())
+                    .isMine(isMine)
                     .build();
         }else{
             throw new IllegalArgumentException("개별자 편지 상세 조회 실패");
